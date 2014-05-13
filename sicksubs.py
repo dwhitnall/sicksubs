@@ -10,6 +10,8 @@ import shlex
 import sqlite3
 import periscope
 import subprocess
+import smtplib
+from email.mime.text import MIMEText
 
 #***********************************<CONFIG>***********************************
 # These are parameters that you may want to configure, although the defaults
@@ -37,6 +39,11 @@ APPEND_LANG = False
 # database entries are cleaned automatically after this number of days of not
 # finding anything
 CLEAN_AFTER = 30
+
+# email settings
+SEND_EMAIL = False
+FROM = 'sicksubs@localhost'
+TO = 'admin@localhost'
 #***********************************</CONFIG>*********************************
 
 
@@ -110,6 +117,16 @@ def find_subs(eps):
             db.remove_single(conn, ep)
             logging.info(u'Cleaned up db because {0} is older than {1} days, and there are still no subs!'.format(
                 ep_name, CLEAN_AFTER))
+            # send email if set to do so.
+            if SEND_EMAIL:
+                msg = MIMEText("%s removed from database because no subs have turned up in %s days.  You will have to 
+                    find them manualy." % (ep_name, CLEAN_AFTER))
+                msg['Subject'] = 'Subs for %s' % ep_name
+                msg['From'] = FROM
+                msg['To'] = TO
+                s = smtplib.SMTP('localhost')
+                s.sendmail(FROM, [TO], msg.as_string())
+                s.quit()
             continue
 
         subs = subdl.listSubtitles(ep.final_loc, [SUB_LANG])
@@ -143,7 +160,17 @@ def find_subs(eps):
                 to_call = shlex.split(script)
                 to_call.append(d.final_loc)
                 subprocess.call(to_call)
-
+    # if set to email, send email for found subs
+    if SEND_EMAIL:
+        for d in successful:
+            ep_name = os.path.splitext(os.path.expanduser(s.final_loc))[0]
+            msg = MIMEText("I've found subs for %s in %s" % (ep_name, SUB_LANG))
+            msg['Subject'] = 'Subs for %s' % ep_name
+            msg['From'] = FROM
+            msg['To'] = TO
+            s = smtplib.SMTP('localhost')
+            s.sendmail(FROM, [TO], msg.as_string())
+            s.quit()
 
 if __name__ == '__main__':
     if '-q' in sys.argv:
