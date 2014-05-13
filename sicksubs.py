@@ -119,8 +119,7 @@ def find_subs(eps):
                 ep_name, CLEAN_AFTER))
             # send email if set to do so.
             if SEND_EMAIL:
-                msg = MIMEText("%s removed from database because no subs have turned up in %s days.  You will have to 
-                    find them manualy." % (ep_name, CLEAN_AFTER))
+                msg = MIMEText("%s removed from database because no subs have turned up in %s days.  You will have to find them manualy." % (ep_name, CLEAN_AFTER))
                 msg['Subject'] = 'Subs for %s' % ep_name
                 msg['From'] = FROM
                 msg['To'] = TO
